@@ -4,6 +4,7 @@ import Home from '../../pages/Home';
 import SideNav from '../SideNav/SideNav'
 import { getAccessTokenFromStorage } from '../../utils/getAccessTokenFromStorage';
 import { useEffect, useState } from 'react';
+import Playlist from '../../pages/Playlist';
 
 const Dashboard = ({ spotifyApi }) => {
     const [ token, setToken ] = useState(getAccessTokenFromStorage())
@@ -20,7 +21,7 @@ const Dashboard = ({ spotifyApi }) => {
         <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex'}}>
             <SideNav spotifyApi={spotifyApi} token={token} />
             <Routes>
-                <Route path='/playlist/:id' element={<div>Playlist</div>} />
+                <Route path='/playlist/:id' element={<Playlist spotifyApi={spotifyApi} token={token}/>} />
                 <Route path='/library' element={<div>Library</div>} />
                 <Route path='/' element={<Home />} />
             </Routes>

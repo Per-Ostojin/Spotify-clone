@@ -4,15 +4,23 @@ import { useParams } from 'react-router-dom';
 
 const Playlist = ({ spotifyApi, token }) => {
     const [playlistInfo, setplaylistInfo] = useState();
+    const { songs, setSongs} = useState();
     const { id } = useParams();
 
     useEffect(() => {
         const getData = async () => {
             try {
                 const playlistDetails = await spotifyApi.getPlaylist(id)
+                setplaylistInfo({
+                    image: playlistDetails.body.images[0].url,
+                    name: playlistDetails.body.name
+                })
                 console.log(playlistDetails);
+                const{ items } = playlistDetails.body.tracks;
+                setSongs(items);
+                console.log(items)
             } catch(e) {
-                console.log(e);
+                console.error(e);
             }
         }
 

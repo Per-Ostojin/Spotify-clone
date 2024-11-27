@@ -1,6 +1,11 @@
-import { Box, Typography, Avatar } from "@mui/material"
+import { Box, Typography, Avatar } from "@mui/material";
+import { useState } from "react";
+import { useParams } from 'react-router-dom';
 
 const Playlist = ({ spotifyApi, token }) => {
+    const [playlistInfo, setplaylistInfo] = useState();
+    const { id } = useParams();
+    
     return <Box id="Playlist__page" sx={{backgroundColor: 'background.paper', flex: 1, overflow: 'auto', }} >
         <Box p={{ xs: 3, md: 4 }} sx={{
             width: '100%',
@@ -14,14 +19,14 @@ const Playlist = ({ spotifyApi, token }) => {
 
         }} >
             <Avatar 
-            src={null} 
+            src={playlistInfo?.image} 
             variant="square" 
-            alt={null} 
+            alt={playlistInfo?.name} 
             sx={{ boxShadow: 15, width: { xs: '100%', md: 235 }, height: { xs: '100%', md: 235} }} />
             <Box>
                 <Typography sx={{fontSize: 12, fontWeight: 'bold', color: 'text.primary'}}>Playlist</Typography>
                 <Typography sx={{fontSize: { xs: 42, md: 72 }, fontWeight: 'bold', color: 'text.primary' }}>
-                    Fake Playlist name
+                    {playlistInfo?.name}
                     </Typography>
             </Box>
         </Box>

@@ -1,5 +1,6 @@
 import { Box, Divider, Grid } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import SongRow from '../SongRow/SongRow';
 
 const SongTable = ({}) => {
 	return (
@@ -16,7 +17,7 @@ const SongTable = ({}) => {
 				<Grid sx={{ width: 35, display: 'flex', alignItems: 'center'}} item>
 					#
 				</Grid>
-				<Grid item sx={{flex: 1, displey:'flex', alignItems: 'center'}} >
+				<Grid item sx={{flex: 1, display:'flex', alignItems: 'center'}} >
 					Title
 				</Grid>
 				<Grid xs={3} item sx={{display: { sx: 'none', md: 'flex' } }} >
@@ -29,6 +30,9 @@ const SongTable = ({}) => {
             <Box pb={2} >
                 <Divider sx={{width: '100%', height: 1 }} />
             </Box>
+            <SongRow />
+            <SongRow />
+            <SongRow />
 		</Box>
 	);
 };

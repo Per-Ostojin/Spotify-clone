@@ -1,4 +1,5 @@
-import { Box, Grid } from '@mui/material';
+import { Box, Divider, Grid } from '@mui/material';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 const SongTable = ({}) => {
 	return (
@@ -22,9 +23,12 @@ const SongTable = ({}) => {
 					Album
 				</Grid>
 				<Grid xs={3} item sx={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}} >
-					Icon
+                <AccessTimeIcon sx={{width: 20, height: 20}} />
 				</Grid>
 			</Grid>
+            <Box pb={2} >
+                <Divider sx={{width: '100%', height: 1 }} />
+            </Box>
 		</Box>
 	);
 };

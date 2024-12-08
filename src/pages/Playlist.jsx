@@ -43,7 +43,7 @@ const Playlist = ({ spotifyApi, token }) => {
 		getData().finally(() => {
 			setStatus({ isLoading: false, isError: null });
 		});
-	}, [id, formatSongs]);
+	}, [id, formatSongs, spotifyApi, token]);
 
 	return (
 		<Box id="Playlist__page" sx={{ backgroundColor: 'background.paper', flex: 1, overflow: 'auto' }}>

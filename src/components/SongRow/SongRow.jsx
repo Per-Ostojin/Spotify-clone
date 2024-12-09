@@ -1,6 +1,7 @@
 import { Avatar, Box, Grid, Typography } from '@mui/material';
 
-const SongRow = ({}) => {
+const SongRow = ({ images, title, artist, album, duration, i, loading }) => {
+	const image = images?.length > 0 ? images[0].url : null;
 	return (
 		<Grid
 			container
@@ -15,21 +16,20 @@ const SongRow = ({}) => {
 			}}
 		>
 			<Grid sx={{ width: 35, display: 'flex', alignItems: 'center', fontSize: 16 }} item>
-				1
+				{i + 1}
 			</Grid>
-			<Grid item sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 2  }}>
-				
-                <Avatar src={null} alt={null} variant='square' />
-                <Box>
-                    <Typography sx={{fontSize: 16, color: 'text.primary'}} >Rich Flex</Typography>
-                    <Typography sx={{fontSize: 12, color: 'text.primary'}} >Drake, 21 Savage</Typography>
-                </Box>
+			<Grid item sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+				<Avatar src={image} alt={null} variant="square" />
+				<Box>
+					<Typography sx={{ fontSize: 16, color: 'text.primary' }}>{title}</Typography>
+					<Typography sx={{ fontSize: 12, color: 'text.primary' }}>{artist}</Typography>
+				</Box>
 			</Grid>
-			<Grid xs={3} item sx={{ display: { sx: 'none', md: 'flex' } }}>
-				Her Loss
+			<Grid xs={3} item sx={{ display: { sx: 'none', md: 'flex', alignItems: 'center' } }}>
+				{album}
 			</Grid>
 			<Grid xs={3} item sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-				3:32
+				{duration}
 			</Grid>
 		</Grid>
 	);

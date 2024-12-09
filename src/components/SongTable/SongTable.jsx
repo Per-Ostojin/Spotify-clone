@@ -14,25 +14,49 @@ const SongTable = ({}) => {
 			}}
 		>
 			<Grid container px={2} p={1} sx={{ width: '100%', color: 'text.secondary', fontSize: 14 }}>
-				<Grid sx={{ width: 35, display: 'flex', alignItems: 'center'}} item>
+				<Grid sx={{ width: 35, display: 'flex', alignItems: 'center' }} item>
 					#
 				</Grid>
-				<Grid item sx={{flex: 1, display:'flex', alignItems: 'center'}} >
+				<Grid item sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
 					Title
 				</Grid>
-				<Grid xs={3} item sx={{display: { sx: 'none', md: 'flex' } }} >
+				<Grid xs={3} item sx={{ display: { sx: 'none', md: 'flex' } }}>
 					Album
 				</Grid>
-				<Grid xs={3} item sx={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}} >
-                <AccessTimeIcon sx={{width: 20, height: 20}} />
+				<Grid xs={3} item sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+					<AccessTimeIcon sx={{ width: 20, height: 20 }} />
 				</Grid>
 			</Grid>
-            <Box pb={2} >
-                <Divider sx={{width: '100%', height: 1 }} />
-            </Box>
-            <SongRow />
-            <SongRow />
-            <SongRow />
+			<Box pb={2}>
+				<Divider sx={{ width: '100%', height: 1 }} />
+			</Box>
+			<SongRow
+				images={null}
+				title={'Rich Flex'}
+				artist={'Drake'}
+				album={'Her Loss'}
+				duration={'3.32'}
+				i={1}
+				loading={false}
+			/>
+			<SongRow
+				images={null}
+				title={'Rich Flex'}
+				artist={'Drake'}
+				album={'Her Loss'}
+				duration={'3.32'}
+				i={1}
+				loading={false}
+			/>
+			<SongRow
+				images={null}
+				title={'Rich Flex'}
+				artist={'Drake'}
+				album={'Her Loss'}
+				duration={'3.32'}
+				i={1}
+				loading={true}
+			/>
 		</Box>
 	);
 };

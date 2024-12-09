@@ -2,7 +2,27 @@ import { Box, Divider, Grid } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SongRow from '../SongRow/SongRow';
 
-const SongTable = ({}) => {
+const SongTable = ({ songs, loading, spotifyApi }) => {
+	console.log({ songs, loading, spotifyApi });
+
+	const renderSongs = () => {
+		if (loading) {
+			return [1, 2, 3, 4, 5].map((e, i) => <SongRow loading={loading} key={i} i={i} images={null} />);
+		}
+
+		return songs.map((song, i) => (
+			<SongRow
+				album={song.album.name}
+				images={song.album.images}
+				title={song.name}
+				artist={song.artists[0].name}
+				duration={song.duration_ms / 1000}
+				key={i}
+				i={i}
+			/>
+		));
+	};
+
 	return (
 		<Box
 			p={{ xs: 3, md: 4 }}
@@ -30,33 +50,7 @@ const SongTable = ({}) => {
 			<Box pb={2}>
 				<Divider sx={{ width: '100%', height: 1 }} />
 			</Box>
-			<SongRow
-				images={null}
-				title={'Rich Flex'}
-				artist={'Drake'}
-				album={'Her Loss'}
-				duration={'3.32'}
-				i={1}
-				loading={false}
-			/>
-			<SongRow
-				images={null}
-				title={'Rich Flex'}
-				artist={'Drake'}
-				album={'Her Loss'}
-				duration={'3.32'}
-				i={1}
-				loading={false}
-			/>
-			<SongRow
-				images={null}
-				title={'Rich Flex'}
-				artist={'Drake'}
-				album={'Her Loss'}
-				duration={'3.32'}
-				i={1}
-				loading={true}
-			/>
+			{renderSongs()}
 		</Box>
 	);
 };

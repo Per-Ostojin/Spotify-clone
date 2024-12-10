@@ -1,5 +1,5 @@
 import { Avatar, Box, Grid, Typography, Skeleton } from '@mui/material';
-
+import { formatTime } from '../../utils/formatTime';
 const SongRow = ({ images, title, artist, album, duration, i, loading }) => {
 	const image = images?.length > 0 ? images[0].url : null;
 	return (
@@ -33,7 +33,7 @@ const SongRow = ({ images, title, artist, album, duration, i, loading }) => {
             {loading ? <Skeleton variant='text' width={50} height={24} /> : album}
 			</Grid>
 			<Grid xs={3} item sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-            {loading ? <Skeleton variant='text' width={50} height={24} /> : duration}
+            {loading ? <Skeleton variant='text' width={50} height={24} /> : formatTime(duration)}
 			</Grid>
 		</Grid>
 	);

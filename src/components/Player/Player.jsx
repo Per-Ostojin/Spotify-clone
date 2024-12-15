@@ -3,14 +3,28 @@ import { Box, Grid, Typography, Avatar } from '@mui/material';
 const Player = ({ spotifyApi }) => {
 	return (
 		<Box>
-			<Grid container>
-				<Grid xs={12} md={4} Items sx={{displey: 'flex', alignItems: 'center', justifyContent: 'flex-start'}} >
-					Bild, Title, Artist
+			<Grid
+				container
+				px={3}
+				sx={{
+					backgroundColor: 'background.paper',
+					height: 100,
+					cursor: { xs: 'pointer', md: 'auto' },
+					width: '100%',
+					borderTop: '1px solid #292929'
+				}}
+			>
+				<Grid xs={12} md={4} Item sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+					<Avatar src={null} alt={null} variant='square' sx={{width: 56, height: 56, marginRight: 2 }} />
+                    <Box>
+                        <Typography sx={{ color: 'text.primary', fontSize: 14 }} >Can't take a joke</Typography>
+                        <Typography sx={{ color: 'text.secondary', fontSize: 10 }} >Drake</Typography>
+                    </Box>
 				</Grid>
 				<Grid
-					Items
+					Item
 					sx={{
-						displey: { xs: 'none', md: 'center' },
+						display: { xs: 'none', md: 'flex' },
 						justifyContent: 'center',
 						alignItems: 'center'
 					}}
@@ -18,7 +32,7 @@ const Player = ({ spotifyApi }) => {
 				>
 					Play knappen,
 				</Grid>
-				<Grid Items xs={6} md={4} sx={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}}>
+				<Grid Item xs={6} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
 					Volume
 				</Grid>
 			</Grid>

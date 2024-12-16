@@ -2,13 +2,12 @@ import { Box, Grid, Typography, Avatar } from '@mui/material';
 import { useEffect, useState } from 'react';
 
 const Player = ({ spotifyApi, token }) => {
-    const [local_player, setLocalPlayer] = useState();
-    const [is_paused, setIsPaused] = useState(false);
-    const [current_track, setCurentTrack] = useState();
-    const [device, setDevice] = useState();
-    const [duration, setDuration] = useState();
-    const [progress, setProgress] = useState();
-
+	const [local_player, setLocalPlayer] = useState();
+	const [is_paused, setIsPaused] = useState(false);
+	const [current_track, setCurrentTrack] = useState();
+	const [device, setDevice] = useState();
+	const [duration, setDuration] = useState();
+	const [progress, setProgress] = useState();
 
 	useEffect(() => {
 		const script = document.createElement('script');
@@ -19,7 +18,7 @@ const Player = ({ spotifyApi, token }) => {
 
 		window.onSpotifyWebPlaybackSDKReady = () => {
 			const player = new window.Spotify.Player({
-				name: 'PO Player',
+				name: 'PO Player 44',
 				getOAuthToken: (cb) => {
 					cb(token);
 				},
@@ -28,31 +27,43 @@ const Player = ({ spotifyApi, token }) => {
 
 			player.addListener('ready', ({ device_id }) => {
 				console.log('Ready with Device ID', device_id);
-                setDevice(device_id);
-                setLocalPlayer(player);
+				setDevice(device_id);
+				setLocalPlayer(player);
 			});
 
 			player.addListener('not_ready', ({ device_id }) => {
 				console.log('Device ID has gone offline', device_id);
 			});
 
-            player.addListener('player_state_changed', (state) => {
-                if(! state || !state.track_window?.current_track) {
-                    return;
-                }
-                console.log(state)
+			player.addListener('player_state_changed', (state) => {
+				if (!state || !state.track_window?.current_track) {
+					return;
+				}
+				console.log(state);
 
-                const duration = state.track_window.current_track.duration_ms / 1000;
-                const progress = state.position / 1000;
-                setDuration(duration)
-                setProgress(progress)
-                setIsPaused(state.paused)
-                setCurentTrack(state.track_window.current_track);
-            })
+				const duration = state.track_window.current_track.duration_ms / 1000;
+				const progress = state.position / 1000;
+				setDuration(duration);
+				setProgress(progress);
+				setIsPaused(state.paused);
+				setCurrentTrack(state.track_window.current_track);
+			});
 
 			player.connect();
 		};
 	}, []);
+
+	useEffect(() => {
+		if (!local_player) return;
+		async function connect() {
+			await local_player.connect();
+		}
+
+		connect();
+		return () => {
+			local_player.disconnect();
+		};
+	}, [local_player]);
 
 	return (
 		<Box>
@@ -67,15 +78,22 @@ const Player = ({ spotifyApi, token }) => {
 					borderTop: '1px solid #292929'
 				}}
 			>
-				<Grid xs={12} md={4} Item sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-					<Avatar src={null} alt={null} variant="square" sx={{ width: 56, height: 56, marginRight: 2 }} />
+				<Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+					<Avatar
+						src={current_track?.album.images[0].url || '/placeholder-image.png'}
+						alt={current_track?.album.name || 'No album'}
+						variant="square"
+						sx={{ width: 56, height: 56, marginRight: 2 }}
+					/>
 					<Box>
-						<Typography sx={{ color: 'text.primary', fontSize: 14 }}>Can't take a joke</Typography>
-						<Typography sx={{ color: 'text.secondary', fontSize: 10 }}>Drake</Typography>
+						<Typography sx={{ color: 'text.primary', fontSize: 14 }}>{current_track?.name || 'No song playing'}</Typography>
+						<Typography sx={{ color: 'text.secondary', fontSize: 10 }}>
+							{current_track?.artists.map(artist => artist.name).join (',') || 'Unknown artist'}
+						</Typography>
 					</Box>
 				</Grid>
 				<Grid
-					Item
+					item
 					sx={{
 						display: { xs: 'none', md: 'flex' },
 						justifyContent: 'center',
@@ -85,7 +103,7 @@ const Player = ({ spotifyApi, token }) => {
 				>
 					Play knappen,
 				</Grid>
-				<Grid Item xs={6} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+				<Grid item xs={6} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
 					Volume
 				</Grid>
 			</Grid>

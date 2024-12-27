@@ -65,6 +65,16 @@ const Player = ({ spotifyApi, token }) => {
 		};
 	}, [local_player]);
 
+	useEffect(() => {
+		const transferMyPlayback = async () => {
+			if(device) {
+				const res = await spotifyApi.getMyDevices()
+				console.log(res)
+				await spotifyApi.transferMyPlayback([device], false)
+			}
+		}
+	}, [device, spotifyApi]);
+
 	return (
 		<Box>
 			<Grid

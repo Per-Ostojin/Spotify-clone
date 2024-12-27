@@ -1,5 +1,6 @@
 import { Box, Grid, Typography, Avatar } from '@mui/material';
 import { useEffect, useState } from 'react';
+import PlayerControls from '../PlayerControls/PlayerControls';
 
 const Player = ({ spotifyApi, token }) => {
 	const [local_player, setLocalPlayer] = useState();
@@ -67,12 +68,12 @@ const Player = ({ spotifyApi, token }) => {
 
 	useEffect(() => {
 		const transferMyPlayback = async () => {
-			if(device) {
-				const res = await spotifyApi.getMyDevices()
-				console.log(res)
-				await spotifyApi.transferMyPlayback([device], false)
+			if (device) {
+				const res = await spotifyApi.getMyDevices();
+				console.log(res);
+				await spotifyApi.transferMyPlayback([device], false);
 			}
-		}
+		};
 	}, [device, spotifyApi]);
 
 	return (
@@ -96,9 +97,11 @@ const Player = ({ spotifyApi, token }) => {
 						sx={{ width: 56, height: 56, marginRight: 2 }}
 					/>
 					<Box>
-						<Typography sx={{ color: 'text.primary', fontSize: 14 }}>{current_track?.name || 'No song playing'}</Typography>
+						<Typography sx={{ color: 'text.primary', fontSize: 14 }}>
+							{current_track?.name || 'No song playing'}
+						</Typography>
 						<Typography sx={{ color: 'text.secondary', fontSize: 10 }}>
-							{current_track?.artists.map(artist => artist.name).join (',') || 'Unknown artist'}
+							{current_track?.artists.map((artist) => artist.name).join(',') || 'Unknown artist'}
 						</Typography>
 					</Box>
 				</Grid>
@@ -111,7 +114,12 @@ const Player = ({ spotifyApi, token }) => {
 					}}
 					md={4}
 				>
-					Play knappen,
+					<PlayerControls
+						progress={progress}
+						is_paused={is_paused}
+						duration={duration}
+						player={local_player}
+					/>
 				</Grid>
 				<Grid item xs={6} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
 					Volume

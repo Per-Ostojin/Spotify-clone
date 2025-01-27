@@ -3,27 +3,31 @@ import { VolumeDown, VolumeUp, VolumeOff } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 
 const PlayerVolume = ({ player }) => {
-    const [volume, setVolume] = useState(50);
-    const [isPlayerReady, setIsPlayerReady] = useState(false); // Ny state för att kontrollera spelarens status
+    const [volume, setVolume] = useState(50); // Standardvolym
+    const [isPlayerReady, setIsPlayerReady] = useState(false); // Spelarens status
+    const [loading, setLoading] = useState(true); // Laddningsstatus
 
+    // Kontrollera om spelaren är redo
     useEffect(() => {
         if (player && typeof player.getVolume === 'function') {
-            setIsPlayerReady(true); // Markera att spelaren är redo
+            setIsPlayerReady(true);
+            setLoading(false); // Sluta visa loading när spelaren är redo
             player.getVolume()
                 .then((volume) => {
                     console.log('Initial volume:', volume);
-                    setVolume(volume * 100); // Spotify SDK använder en skala från 0 till 1
+                    setVolume(volume * 100); // Omvandla volym till procent
                 })
                 .catch((e) => console.error('Error fetching initial volume:', e));
         } else {
-            console.warn('Player is not ready or getVolume is not available.');
             setIsPlayerReady(false);
+            console.warn('Player is not ready or getVolume is not available.');
         }
     }, [player]);
 
+    // Hantera volymändring
     const handleVolumeChange = async (value) => {
         if (!isPlayerReady || !player || typeof player.setVolume !== 'function') {
-            console.error('Player instance is not available for volume control.');
+            console.error('Player is not ready or setVolume is not available.');
             return;
         }
         try {
@@ -35,17 +39,12 @@ const PlayerVolume = ({ player }) => {
         }
     };
 
-    if (!isPlayerReady) {
+    // Fallback om spelaren inte är redo
+    if (loading) {
         return (
-            <Stack direction="row" spacing={2} alignItems="center" sx={{ width: 150, color: 'error.main' }}>
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ width: 150, color: 'text.secondary' }}>
                 <VolumeOff />
-                <Slider
-                    disabled
-                    min={0}
-                    max={100}
-                    value={volume}
-                    sx={{ opacity: 0.5 }}
-                />
+                <Slider disabled />
             </Stack>
         );
     }

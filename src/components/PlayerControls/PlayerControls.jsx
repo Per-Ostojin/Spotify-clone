@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 
 const PlayerControls = ({ is_paused, duration = 0, progress = 0, player }) => {
     const [currentProgress, setCurrentProgress] = useState(progress);
-    const [isPlayerReady, setIsPlayerReady] = useState(false); // Ny state för att indikera player-status
+    const [isPlayerReady, setIsPlayerReady] = useState(false);
+    const [loading, setLoading] = useState(true); // Ny loading-state
     const skipStyle = { width: 28, height: 28 };
     const playStyle = { width: 38, height: 38 };
 
@@ -13,9 +14,10 @@ const PlayerControls = ({ is_paused, duration = 0, progress = 0, player }) => {
     useEffect(() => {
         if (player && typeof player.getCurrentState === 'function') {
             setIsPlayerReady(true);
+            setLoading(false); // Sluta visa loading när spelaren är redo
         } else {
-            console.warn('Player is not ready or getCurrentState is not available.');
             setIsPlayerReady(false);
+            console.warn('Player is not ready or getCurrentState is not available.');
         }
     }, [player]);
 
@@ -51,19 +53,16 @@ const PlayerControls = ({ is_paused, duration = 0, progress = 0, player }) => {
         try {
             await action();
             console.log(`${label} executed successfully.`);
-            if (player) {
-                const state = await player.getCurrentState();
-                console.log(`Player state after ${label}:`, state);
-            }
         } catch (error) {
             console.error(`${label} action error:`, error);
         }
     };
 
-    if (!isPlayerReady) {
+    // Fallback om spelaren inte är redo
+    if (loading) {
         return (
-            <Typography sx={{ color: 'error.main', textAlign: 'center' }}>
-                Spelaren är inte tillgänglig. Kontrollera att spelaren är korrekt initialiserad.
+            <Typography sx={{ color: 'text.secondary', textAlign: 'center' }}>
+                Laddar Spotify-spelaren...
             </Typography>
         );
     }

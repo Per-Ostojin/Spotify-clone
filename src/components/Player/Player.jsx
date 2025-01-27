@@ -14,20 +14,9 @@ const Player = ({ spotifyApi, token }) => {
     const [active, setActive] = useState(false);
     const [playerOverlayIsOpen, setPlayerOverlayIsOpen] = useState(false);
     const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true); // Ny loading-status
 
-    const logPlayerState = async () => {
-        if (!localPlayer || typeof localPlayer.getCurrentState !== 'function') {
-            console.warn('Player or getCurrentState is not available.');
-            return;
-        }
-        try {
-            const state = await localPlayer.getCurrentState();
-            console.log('Player state:', state);
-        } catch (error) {
-            console.error('Error fetching player state:', error);
-        }
-    };
-
+    // Initiera Spotify Web Playback SDK
     useEffect(() => {
         const script = document.createElement('script');
         script.src = 'https://sdk.scdn.co/spotify-player.js';
@@ -40,13 +29,14 @@ const Player = ({ spotifyApi, token }) => {
                 name: 'P.O Player',
                 getOAuthToken: (cb) => cb(token),
                 volume: 0.5,
-                robust: 'robustness-level-1',
             });
 
+            // Eventhanterare
             player.addListener('ready', ({ device_id }) => {
                 console.log('Player is ready with Device ID:', device_id);
                 setDevice(device_id);
                 setLocalPlayer(player);
+                setLoading(false);
             });
 
             player.addListener('not_ready', ({ device_id }) => {
@@ -75,15 +65,9 @@ const Player = ({ spotifyApi, token }) => {
                 setIsPaused(state.paused);
                 setCurrentTrack(track);
 
-                if (localPlayer && typeof localPlayer.getCurrentState === 'function') {
-                    localPlayer
-                        .getCurrentState()
-                        .then((state) => setActive(!!state))
-                        .catch((e) => console.error('Error getting player state:', e));
-                } else {
-                    console.warn('Player is not available or getCurrentState is not a function.');
-                    setActive(false);
-                }
+                player.getCurrentState()
+                    .then((state) => setActive(!!state))
+                    .catch((e) => console.error('Error getting player state:', e));
             });
 
             player.connect().catch((e) => console.error('Player connection error:', e));
@@ -95,40 +79,14 @@ const Player = ({ spotifyApi, token }) => {
         };
     }, [token]);
 
+    // Flytta uppspelning till webbläsarspelaren
     useEffect(() => {
-        if (!localPlayer) return;
+        if (!device) return;
 
-        async function connectPlayer() {
-            try {
-                const success = await localPlayer.connect();
-                if (!success) {
-                    console.error('Player connection failed.');
-                } else {
-                    console.log('Player connected successfully.');
-                }
-            } catch (e) {
-                console.error('Error connecting player:', e);
-            }
-        }
-
-        connectPlayer();
-
-        return () => {
-            localPlayer.disconnect();
-        };
-    }, [localPlayer]);
-
-    useEffect(() => {
         const transferPlayback = async () => {
-            if (!device) return;
-
             try {
                 await spotifyApi.transferMyPlayback([device], false);
                 console.log('Playback transferred successfully.');
-                if (localPlayer) {
-                    await localPlayer.resume();
-                    console.log('Playback resumed on Web Player.');
-                }
             } catch (e) {
                 console.error('Error transferring playback:', e);
                 setError('Failed to transfer playback. Try again.');
@@ -137,6 +95,14 @@ const Player = ({ spotifyApi, token }) => {
 
         transferPlayback();
     }, [device, spotifyApi]);
+
+    if (loading) {
+        return (
+            <Typography sx={{ color: 'text.secondary', textAlign: 'center', margin: 4 }}>
+                Loading player...
+            </Typography>
+        );
+    }
 
     return (
         <Box>

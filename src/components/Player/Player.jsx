@@ -5,159 +5,210 @@ import PlayerVolume from '../PlayerVolume/PlayerVolume';
 import PlayerOverlay from '../PlayerOverlay/PlayerOverlay';
 
 const Player = ({ spotifyApi, token }) => {
-	const [local_player, setLocalPlayer] = useState();
-	const [is_paused, setIsPaused] = useState(false);
-	const [current_track, setCurrentTrack] = useState();
-	const [device, setDevice] = useState();
-	const [duration, setDuration] = useState();
-	const [progress, setProgress] = useState();
-	const [active, setActive] = useState();
-	const [playerOverlayIsOpen, setPlayerOverlayIsOpen] = useState(false);
+    const [localPlayer, setLocalPlayer] = useState(null);
+    const [isPaused, setIsPaused] = useState(false);
+    const [currentTrack, setCurrentTrack] = useState(null);
+    const [device, setDevice] = useState(null);
+    const [duration, setDuration] = useState(0);
+    const [progress, setProgress] = useState(0);
+    const [active, setActive] = useState(false);
+    const [playerOverlayIsOpen, setPlayerOverlayIsOpen] = useState(false);
+    const [error, setError] = useState(null);
 
-	useEffect(() => {
-		const script = document.createElement('script');
-		script.src = 'https://sdk.scdn.co/spotify-player.js';
-		script.async = true;
+    const logPlayerState = async () => {
+        if (!localPlayer || typeof localPlayer.getCurrentState !== 'function') {
+            console.warn('Player or getCurrentState is not available.');
+            return;
+        }
+        try {
+            const state = await localPlayer.getCurrentState();
+            console.log('Player state:', state);
+        } catch (error) {
+            console.error('Error fetching player state:', error);
+        }
+    };
 
-		document.body.appendChild(script);
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://sdk.scdn.co/spotify-player.js';
+        script.async = true;
 
-		window.onSpotifyWebPlaybackSDKReady = () => {
-			const player = new window.Spotify.Player({
-				name: 'P.O Player',
-				getOAuthToken: (cb) => {
-					cb(token);
-				},
-				volume: 0.5
-			});
+        document.body.appendChild(script);
 
-			player.addListener('ready', ({ device_id }) => {
-				console.log('Ready with Device ID:', device_id);
-				setDevice(device_id);
-				setLocalPlayer(player);
-			});
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            const player = new window.Spotify.Player({
+                name: 'P.O Player',
+                getOAuthToken: (cb) => cb(token),
+                volume: 0.5,
+                robust: 'robustness-level-1',
+            });
 
-			player.addListener('not_ready', ({ device_id }) => {
-				console.warn('Device ID is offline:', device_id);
-			});
+            player.addListener('ready', ({ device_id }) => {
+                console.log('Player is ready with Device ID:', device_id);
+                setDevice(device_id);
+                setLocalPlayer(player);
+            });
 
-			player.addListener('player_state_changed', (state) => {
-				if (!state || !state.track_window?.current_track) {
-					return;
-				}
-				console.log('Player state changed:', state);
+            player.addListener('not_ready', ({ device_id }) => {
+                console.warn('Device ID is offline:', device_id);
+            });
 
-				setDuration(state.track_window.current_track.duration_ms / 1000);
-				setProgress(state.position / 1000);
-				setIsPaused(state.paused);
-				setCurrentTrack(state.track_window.current_track);
+            player.addListener('player_state_changed', (state) => {
+                if (!state) {
+                    console.warn('Player state is null.');
+                    setError('Player state is inactive.');
+                    setActive(false);
+                    return;
+                }
 
-				player
-					.getCurrentState()
-					.then((state) => {
-						setActive(!!state);
-					})
-					.catch((e) => console.error('Error getting player state:', e));
-			});
+                const track = state.track_window?.current_track;
+                if (!track) {
+                    console.warn('No current track.');
+                    setError('No track available.');
+                    setActive(false);
+                    return;
+                }
 
-			player.connect().catch((e) => console.error('Player connection error:', e));
-		};
-	}, [token]);
+                setError(null);
+                setDuration(track.duration_ms / 1000);
+                setProgress(state.position / 1000);
+                setIsPaused(state.paused);
+                setCurrentTrack(track);
 
-	useEffect(() => {
-		if (!local_player) return;
+                if (localPlayer && typeof localPlayer.getCurrentState === 'function') {
+                    localPlayer
+                        .getCurrentState()
+                        .then((state) => setActive(!!state))
+                        .catch((e) => console.error('Error getting player state:', e));
+                } else {
+                    console.warn('Player is not available or getCurrentState is not a function.');
+                    setActive(false);
+                }
+            });
 
-		async function connect() {
-			try {
-				await local_player.connect();
-			} catch (e) {
-				console.error('Error connecting player:', e);
-			}
-		}
+            player.connect().catch((e) => console.error('Player connection error:', e));
+        };
 
-		connect();
-		return () => {
-			local_player.disconnect();
-		};
-	}, [local_player]);
+        return () => {
+            console.log('Removing Spotify Web Playback SDK.');
+            document.body.removeChild(script);
+        };
+    }, [token]);
 
-	useEffect(() => {
-		const transferMyPlayback = async () => {
-			if (device) {
-				try {
-					const res = await spotifyApi.getMyDevices();
-					console.log('Devices:', res.body.devices);
-					await spotifyApi.transferMyPlayback([device], false);
-				} catch (e) {
-					console.error('Error transferring playback:', e);
-				}
-			}
-		};
+    useEffect(() => {
+        if (!localPlayer) return;
 
-		transferMyPlayback();
-	}, [device, spotifyApi]);
+        async function connectPlayer() {
+            try {
+                const success = await localPlayer.connect();
+                if (!success) {
+                    console.error('Player connection failed.');
+                } else {
+                    console.log('Player connected successfully.');
+                }
+            } catch (e) {
+                console.error('Error connecting player:', e);
+            }
+        }
 
-	return (
-		<Box>
-			<Grid
-				onClick={() => setPlayerOverlayIsOpen((prevState) => !prevState)}
-				container
-				px={3}
-				sx={{
-					backgroundColor: 'background.paper',
-					height: 100,
-					cursor: { xs: 'pointer', md: 'auto' },
-					width: '100%',
-					borderTop: '1px solid #292929'
-				}}
-			>
-				<Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-					<Avatar
-						src={current_track?.album.images[0]?.url || '/placeholder-image.png'}
-						alt={current_track?.album.name || 'No album'}
-						variant="square"
-						sx={{ width: 56, height: 56, marginRight: 2 }}
-					/>
-					<Box>
-						<Typography sx={{ color: 'text.primary', fontSize: 14 }}>
-							{current_track?.name || 'No song playing'}
-						</Typography>
-						<Typography sx={{ color: 'text.secondary', fontSize: 10 }}>
-							{current_track?.artists?.map((artist) => artist.name).join(', ') || 'Unknown artist'}
-						</Typography>
-					</Box>
-				</Grid>
-				<Grid
-					item
-					sx={{
-						display: { xs: 'none', md: 'flex' },
-						justifyContent: 'center',
-						alignItems: 'center'
-					}}
-					md={4}
-				>
-					<PlayerControls
-						progress={progress}
-						is_paused={is_paused}
-						duration={duration}
-						player={local_player}
-					/>
-				</Grid>
-				<Grid item xs={6} md={4} sx={{ display: {xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'flex-end' }}>
-					<PlayerVolume player={local_player} />
-				</Grid>
-			</Grid>
-			<PlayerOverlay
-				playerOverlayIsOpen={playerOverlayIsOpen}
-				closeOverlay={() => setPlayerOverlayIsOpen(false)}
+        connectPlayer();
+
+        return () => {
+            localPlayer.disconnect();
+        };
+    }, [localPlayer]);
+
+    useEffect(() => {
+        const transferPlayback = async () => {
+            if (!device) return;
+
+            try {
+                await spotifyApi.transferMyPlayback([device], false);
+                console.log('Playback transferred successfully.');
+                if (localPlayer) {
+                    await localPlayer.resume();
+                    console.log('Playback resumed on Web Player.');
+                }
+            } catch (e) {
+                console.error('Error transferring playback:', e);
+                setError('Failed to transfer playback. Try again.');
+            }
+        };
+
+        transferPlayback();
+    }, [device, spotifyApi]);
+
+    return (
+        <Box>
+            {error && <Typography sx={{ color: 'error.main', textAlign: 'center' }}>{error}</Typography>}
+            <Grid
+                onClick={() => setPlayerOverlayIsOpen((prev) => !prev)}
+                container
+                px={3}
+                sx={{
+                    backgroundColor: 'background.paper',
+                    height: 100,
+                    cursor: { xs: 'pointer', md: 'auto' },
+                    width: '100%',
+                    borderTop: '1px solid #292929',
+                }}
+            >
+                <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                    <Avatar
+                        src={currentTrack?.album.images[0]?.url || 'https://via.placeholder.com/56'}
+                        alt={currentTrack?.album.name || 'No album'}
+                        variant="square"
+                        sx={{ width: 56, height: 56, marginRight: 2 }}
+                    />
+                    <Box>
+                        <Typography sx={{ color: 'text.primary', fontSize: 14 }}>
+                            {currentTrack?.name || 'No song playing'}
+                        </Typography>
+                        <Typography sx={{ color: 'text.secondary', fontSize: 10 }}>
+                            {currentTrack?.artists?.map((artist) => artist.name).join(', ') || 'Unknown artist'}
+                        </Typography>
+                    </Box>
+                </Grid>
+                <Grid
+                    item
+                    sx={{
+                        display: { xs: 'none', md: 'flex' },
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    }}
+                    md={4}
+                >
+                    <PlayerControls
+                        progress={progress}
+                        is_paused={isPaused}
+                        duration={duration}
+                        player={localPlayer}
+                    />
+                </Grid>
+                <Grid
+                    item
+                    xs={6}
+                    md={4}
+                    sx={{
+                        display: { xs: 'none', md: 'flex' },
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                    }}
+                >
+                    <PlayerVolume player={localPlayer} />
+                </Grid>
+            </Grid>
+            <PlayerOverlay
+                playerOverlayIsOpen={playerOverlayIsOpen}
+                closeOverlay={() => setPlayerOverlayIsOpen(false)}
                 progress={progress}
-                is_paused={is_paused}
+                is_paused={isPaused}
                 duration={duration}
-                player={local_player}
-                current_track={current_track}
-
-			/>
-		</Box>
-	);
+                player={localPlayer}
+                current_track={currentTrack}
+            />
+        </Box>
+    );
 };
 
 export default Player;

@@ -1,111 +1,134 @@
-import { Stack, Typography, Slider, Box, IconButton } from '@mui/material';
+import { Stack, Typography, Slider, IconButton } from '@mui/material';
 import { formatTime } from '../../utils/formatTime';
 import { PlayArrow, SkipNext, SkipPrevious, Pause } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 
-const PlayerControls = ({ is_paused, duration, progress, player }) => {
+const PlayerControls = ({ is_paused, duration = 0, progress = 0, player }) => {
     const [currentProgress, setCurrentProgress] = useState(progress);
+    const [isPlayerReady, setIsPlayerReady] = useState(false); // Ny state för att indikera player-status
     const skipStyle = { width: 28, height: 28 };
     const playStyle = { width: 38, height: 38 };
 
-    // Update currentProgress periodically when playing
+    // Kontrollera om player är redo
     useEffect(() => {
-        if (!player) return;
+        if (player && typeof player.getCurrentState === 'function') {
+            setIsPlayerReady(true);
+        } else {
+            console.warn('Player is not ready or getCurrentState is not available.');
+            setIsPlayerReady(false);
+        }
+    }, [player]);
 
-        const intervalId = setInterval(() => {
-            if (!is_paused && currentProgress < duration) {
-                setCurrentProgress((prevState) => Math.min(prevState + 1, duration));
-            }
-        }, 1000);
+    // Synkronisera progress med spelaren
+    useEffect(() => {
+        if (!isPlayerReady) return;
 
+        const syncProgress = () => {
+            player.getCurrentState()
+                .then((state) => {
+                    if (state && !is_paused) {
+                        setCurrentProgress(state.position / 1000);
+                    }
+                })
+                .catch((err) => console.error('Failed to sync progress:', err));
+        };
+
+        const intervalId = setInterval(syncProgress, 1000);
         return () => clearInterval(intervalId);
-    }, [is_paused, player, duration, currentProgress]);
+    }, [player, is_paused, isPlayerReady]);
 
-    // Sync currentProgress with incoming progress updates
+    // Uppdatera progress vid inkommande förändringar
     useEffect(() => {
         setCurrentProgress(progress);
     }, [progress]);
 
-    // Helper function for logging errors
-    const handlePlayerError = (methodName, error) => {
-        console.error(`${methodName} error:`, error);
+    // Hantera användarens åtgärder (Play, Pause, Next, Previous)
+    const handlePlayerAction = async (action, label) => {
+        if (!isPlayerReady) {
+            console.warn(`Player is not ready for action: ${label}`);
+            return;
+        }
+        try {
+            await action();
+            console.log(`${label} executed successfully.`);
+            if (player) {
+                const state = await player.getCurrentState();
+                console.log(`Player state after ${label}:`, state);
+            }
+        } catch (error) {
+            console.error(`${label} action error:`, error);
+        }
     };
 
+    if (!isPlayerReady) {
+        return (
+            <Typography sx={{ color: 'error.main', textAlign: 'center' }}>
+                Spelaren är inte tillgänglig. Kontrollera att spelaren är korrekt initialiserad.
+            </Typography>
+        );
+    }
+
     return (
-        <Stack direction={'column'} spacing={2} justifyContent={'center'} alignItems={'center'} sx={{ width: '100%' }}>
-            <Stack spacing={1} direction={'row'} justifyContent={'center'} alignItems={'center'} sx={{ width: '100%' }}>
-                {/* Previous Track Button */}
+        <Stack direction="column" spacing={2} justifyContent="center" alignItems="center" sx={{ width: '100%' }}>
+            {/* Kontroller */}
+            <Stack spacing={1} direction="row" justifyContent="center" alignItems="center" sx={{ width: '100%' }}>
                 <IconButton
                     size="small"
                     sx={{ color: 'text.primary' }}
-                    onClick={() => {
-                        if (!player) {
-                            console.error('Player is not initialized.');
-                            return;
-                        }
-                        setCurrentProgress(0);
-                        player.previousTrack().catch((e) => handlePlayerError('Previous track', e));
-                    }}
+                    disabled={!isPlayerReady}
+                    onClick={() => handlePlayerAction(() => player.previousTrack(), 'Föregående låt')}
                 >
                     <SkipPrevious sx={skipStyle} />
                 </IconButton>
 
-                {/* Play/Pause Button */}
                 <IconButton
                     size="small"
                     sx={{ color: 'text.primary' }}
-                    onClick={() => {
-                        if (!player) {
-                            console.error('Player is not initialized.');
-                            return;
-                        }
-                        player.togglePlay().catch((e) => handlePlayerError('Toggle play', e));
-                    }}
+                    disabled={!isPlayerReady}
+                    onClick={() => handlePlayerAction(() => player.togglePlay(), 'Play/Pause')}
                 >
                     {is_paused ? <PlayArrow sx={playStyle} /> : <Pause sx={playStyle} />}
                 </IconButton>
 
-                {/* Next Track Button */}
                 <IconButton
                     size="small"
                     sx={{ color: 'text.primary' }}
-                    onClick={() => {
-                        if (!player) {
-                            console.error('Player is not initialized.');
-                            return;
-                        }
-                        setCurrentProgress(0);
-                        player.nextTrack().catch((e) => handlePlayerError('Next track', e));
-                    }}
+                    disabled={!isPlayerReady}
+                    onClick={() => handlePlayerAction(() => player.nextTrack(), 'Nästa låt')}
                 >
                     <SkipNext sx={skipStyle} />
                 </IconButton>
             </Stack>
 
-            {/* Slider for Track Progress */}
-            <Stack spacing={2} direction={'row'} justifyContent={'center'} alignItems={'center'} sx={{ width: '75%' }}>
-                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>{formatTime(currentProgress)}</Typography>
+            {/* Progress-bar */}
+            <Stack spacing={2} direction="row" justifyContent="center" alignItems="center" sx={{ width: '75%' }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    {duration > 0 ? formatTime(currentProgress) : '--:--'}
+                </Typography>
                 <Slider
-                    max={duration || 0} // Ensure duration is not undefined
-                    value={currentProgress || 0} // Fallback to 0 if currentProgress is undefined
+                    max={duration}
+                    value={currentProgress}
                     min={0}
                     size="medium"
-                    onChange={(event, value) => {
-                        if (typeof value === 'number') {
-                            setCurrentProgress(value);
-                        } else {
-                            console.error('Invalid slider value:', value);
-                        }
-                    }}
-                    onChangeCommitted={(event, value) => {
-                        if (!player) {
-                            console.error('Player is not initialized.');
+                    valueLabelDisplay="auto"
+                    valueLabelFormat={formatTime}
+                    onChange={(event, value) => setCurrentProgress(value)}
+                    onChangeCommitted={async (event, value) => {
+                        if (!isPlayerReady) {
+                            console.warn('Player is not ready for seeking.');
                             return;
                         }
-                        player.seek(value * 1000).catch((e) => handlePlayerError('Seek', e));
+                        try {
+                            await player.seek(value * 1000);
+                            console.log('Seek action successful:', value);
+                        } catch (error) {
+                            console.error('Seek action error:', error);
+                        }
                     }}
                 />
-                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>{formatTime(duration)}</Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    {duration > 0 ? formatTime(duration) : '--:--'}
+                </Typography>
             </Stack>
         </Stack>
     );

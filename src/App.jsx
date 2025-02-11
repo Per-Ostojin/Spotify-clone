@@ -6,7 +6,7 @@ import { getAccessToken } from './utils/getAccessToken';
 import { getAccessTokenFromStorage } from './utils/getAccessTokenFromStorage';
 import { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Header from "./components/Header/Header";
+// import Header from "./components/Header/Header";
 
 function App({ spotifyApi }) {
     const [token, setToken] = useState(getAccessTokenFromStorage());
@@ -81,7 +81,7 @@ function App({ spotifyApi }) {
 
     return (
         <Box className="App">
-            <Header />
+            {/* <Header /> */}
             {token && isApiReady ? (
                 <Dashboard spotifyApi={spotifyApi} />
             ) : (
